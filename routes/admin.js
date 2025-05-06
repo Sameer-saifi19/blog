@@ -1,8 +1,9 @@
 const { Router } = require("express");
 const { z } = require("zod");
-const { adminModel } = require("../db");
+const { adminModel, postModel } = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { authMiddleware } = require("../middleware/authmiddleware");
 const JWT_ADMIN_SECRET = "admin123";
 const adminRouter = Router();
 
@@ -96,6 +97,28 @@ adminRouter.post("/signin", async function (req, res) {
   }
 });
 
+adminRouter.post("/create-post", authMiddleware, async function (req, res) {
+    const { title, description } = req.body;
+  
+    try {
+      const post = await postModel.create({
+        title,
+        description,
+        author: req.adminId,
+      });
+  
+      res.status(201).json({
+        message: "Post created successfully",
+        postId: post._id,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Failed to create post",
+        error: error.message,
+      });
+    }
+  });
+  
 module.exports = {
   adminRouter: adminRouter,
 };
